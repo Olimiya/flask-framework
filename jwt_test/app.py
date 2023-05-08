@@ -16,7 +16,7 @@ app = Flask(__name__)
 
 
 app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////test1.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test1.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 
@@ -76,13 +76,15 @@ def protected():
     )
 
 
-if __name__ == "__main__":
+with app.app_context():
+    db.drop_all()
     db.create_all()
     db.session.add(User(full_name="Bruce Wayne", username="batman"))
     db.session.add(User(full_name="Ann Takamaki", username="panther"))
     db.session.add(User(full_name="Jester Lavore", username="little_sapphire"))
     db.session.commit()
 
+if __name__ == "__main__":
     app.run()
 
 
