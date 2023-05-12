@@ -1,4 +1,5 @@
 # test jwt_required() decorator will raise an exception if the token is not present or invalid.
+# JWT使用的官方示例代码
 from hmac import compare_digest
 
 from flask import Flask
@@ -58,7 +59,7 @@ def login():
 
     user = User.query.filter_by(username=username).one_or_none()
     if not user or not user.check_password(password):
-        return jsonify("Wrong username or password"), 401
+        return jsonify("app Wrong username or password"), 401
 
     # Notice that we are passing in the actual sqlalchemy user object here
     access_token = create_access_token(identity=user)
@@ -87,36 +88,12 @@ with app.app_context():
 if __name__ == "__main__":
     app.run()
 
+# test:
+# curl -H "Content-Type: application/json" \
+    #  -X POST \
+    #  -d '{"username": "<your-username>", "password": "<your-password>"}' \
+    #   http://localhost:5000/login
 
-# 基于登录创建token进行身份验证
-
-# jwt = JWTManager(app)
-
-# @app.route('/login', methods=['POST'])
-# def login():
-#     """
-#     Returns a JWT token.
-#     """
-#     username = request.json.get('username', None)
-#     password = request.json.get('password', None)
-#     if username != 'test' or password != 'test':
-#         return jsonify({"msg": "Bad username or password"}), 401
-
-#     access_token = create_access_token(identity=username)
-#     return jsonify(access_token=access_token)
-
-# @app.route('/protected', methods=['GET'])
-# @jwt_required()
-# def protected():
-#     """
-#     Returns a protected response.
-#     """
-#     username = get_jwt_identity()
-#     return jsonify(logged_in_as=username), 200
-
-# if __name__ == '__main__':
-#     app.run(debug=True)
-# test
-# $ curl -X POST -H "Content-Type: application/json" -d '{"username":"test","password":"test"}' http://localhost:5000/login
-# {"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2....
-# $ curl -X GET -H "Authorization: Bearer <access_token>" http://localhost:5000/protected
+# curl -H "Authorization: Bearer <your-access-token>" \
+    #  -X GET \
+    #   http://localhost:5000/who_am_i
