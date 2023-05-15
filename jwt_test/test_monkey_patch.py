@@ -1,9 +1,15 @@
+# Description: 测试monkey_patch_jwt.py的效果
+
 import monkey_patch_jwt
 from flask_jwt_extended import jwt_required, verify_jwt_in_request, JWTManager
 from flask import Flask
+import logging
 
-test_flask_bp = Flask(__name__)
-jwt = JWTManager(test_flask_bp)
+# 设置日志级别
+logging.basicConfig(level=logging.DEBUG)
+
+app = Flask(__name__)
+jwt = JWTManager(app)
 
 
 def route(url, methods=None):
@@ -15,7 +21,17 @@ def route(url, methods=None):
     :return:
     """
     method_list = methods if methods else ['POST', 'GET']
-    return test_flask_bp.route(url, methods=method_list)
+    return app.route(url, methods=method_list)
+
+
+@app.before_request
+def before_request():
+    print("before_request")
+
+
+@route("/")
+def index():
+    return 'index'
 
 
 @route("/test-jwt")
@@ -31,4 +47,4 @@ def test_verify():
 
 
 if __name__ == '__main__':
-    test_flask_bp.run()
+    app.run()

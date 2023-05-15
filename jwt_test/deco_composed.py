@@ -17,7 +17,9 @@ def log(msg):
         def wrapper(*args, **kwargs):
             print(msg)
             return f(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -27,7 +29,9 @@ def repeat(n):
         def wrapper(*args, **kwargs):
             for i in range(n):
                 f(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -42,11 +46,11 @@ greet('world')
 
 
 def composed(*decs):
-    @wraps(f)
     def deco(f):
         for dec in reversed(decs):
             f = dec(f)
         return f
+
     return deco
 
 
@@ -57,6 +61,8 @@ def greet1(name):
 
 print("greet1: ", greet1.__name__)
 greet1('world')
+
+
 # greet1('world')
 
 
@@ -66,6 +72,7 @@ def composed_with_args(msg, n):
 
     def deco(f):
         return deco1(deco2(f))
+
     return deco
 
 

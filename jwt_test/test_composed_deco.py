@@ -33,12 +33,12 @@ def login():
     access_token = create_access_token(identity=username)
 
 
-
 def composed(*decs):
     def deco(f):
         for dec in reversed(decs):
             f = dec(f)
         return f
+
     return deco
 
 
@@ -47,7 +47,7 @@ def composed_route_and_jwt_required(rule: str, **options):
                 fresh: bool = False,
                 refresh: bool = False,
                 locations=None,
-                verify_type: bool = True,):
+                verify_type: bool = True, ):
         def decorator(f):
             jwt_dec = jwt_required(
                 optional=optional, fresh=fresh, refresh=refresh, locations=locations, verify_type=verify_type)
@@ -55,6 +55,7 @@ def composed_route_and_jwt_required(rule: str, **options):
             return composed(route_dec, jwt_dec)(f)
 
         return decorator
+
     return dec_jwt
 
 
@@ -63,7 +64,7 @@ def jwt_and_route(rule: str, **options):
                 fresh: bool = False,
                 refresh: bool = False,
                 locations=None,
-                verify_type: bool = True,):
+                verify_type: bool = True, ):
         def decorator(f):
             jwt_dec = jwt_required()
             route_dec = app.route(rule, **options)
@@ -77,6 +78,7 @@ def jwt_and_route(rule: str, **options):
             return wrapper
 
         return decorator
+
     return dec_jwt
 
 
@@ -89,6 +91,7 @@ def simple_route_and_jwt_required(rule: str, **options):
         @jwt_required(**jwt_option)
         def wrapper(*args, **kwargs):
             return fn(*args, **kwargs)
+
         return wrapper
 
     return decorator
