@@ -11,70 +11,57 @@ watch_long_sql.py
 2 输出到日志，
 3 添加阈值控制，进行报警
 """
-from flask import Flask, jsonify
-from flask_sqlalchemy import SQLAlchemy
+
 import logging
 
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
-
-# region 监控实现
 # 设置
-debug = False  # 是否开启debug模式
+debug = True  # 是否开启debug模式
 long_sql_threshold = 0.0001  # 长SQL阈值，单位秒
 
-if debug:
-    app.config["SQLALCHEMY_RECORD_QUERIES"] = True
-    logging.basicConfig(level=logging.DEBUG)
 
-db = SQLAlchemy(app)
-
+# region 监控实现，基于flask_sqlalchemy的record_queries
 
 # 捕获SQL的record_queries，输出到日志
-def log_record_queries(app):
+def log_record_queries():
+    """
+    捕获SQL的record_queries，输出到日志
+    该函数需要flask app上下文环境。
+    同时需要在app.config中设置SQLALCHEMY_RECORD_QUERIES = True
+    只针对于flask_sqlalchemy的SQL操作有效
+    """
     import flask_sqlalchemy.record_queries
     records = flask_sqlalchemy.record_queries.get_recorded_queries()
+    print("records: {}".format(records))
     long_records = [r for r in records if r.duration >= long_sql_threshold]
     if long_records:
         logging.warning("".join([
-            f"'info.duration: '{info.duration} 'info.location: '{info.location}\n"
+            f"'sql duration: '{info.duration} 'sql location: '{info.location}\n"
             for info in long_records]))
 
 
-# region 测试
-# 表
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String, nullable=False)
-    email = db.Column(db.String)
+# endregion
 
 
-with app.app_context():
-    db.create_all()
+# region 监控，基于sqlalchemy的事件监听，自定义实现
+from sqlalchemy import create_engine, event
+import time
 
 
-# 执行创建，生成大量虚拟数据，形成秒级别的操作延迟
-@app.route('/create')
-def create():
-    for i in range(1000):
-        user = User(username='user' + str(i), email='user' + str(i) + '@example.com')
-        db.session.add(user)
-    db.session.commit()
-    log_record_queries(app)
-    return 'ok'
+def monitor_engine(engine):
+    """
+    监控engine中的SQL执行，对长SQL操作输出到日志。
+    """
+    @event.listens_for(engine, "before_cursor_execute")
+    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        context._query_start_time = time.perf_counter()
 
+    @event.listens_for(engine, "after_cursor_execute")
+    def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        duration = time.perf_counter() - context._query_start_time
+        if duration >= long_sql_threshold:
+            logging.warning("".join(
+                f"'sql duration: '{duration} 秒. 'sql statement: '{statement}.\n"
+            ))
 
-# 长SQL测试，执行一个慢SQL的操作
-@app.route('/long_sql')
-def long_sql():
-    # 查询所有用户，返回
-    users = User.query.all()
-    log_record_queries(app)
-    return jsonify([user.username for user in users])
-
-
-# run
-if __name__ == '__main__':
-    app.run(debug=True)
-
+# 其他操作...
 # endregion
