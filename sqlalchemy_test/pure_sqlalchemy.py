@@ -21,42 +21,42 @@ session = Session()
 
 # region 创建表
 # 创建表
-# Base = sqlalchemy.orm.declarative_base()
-#
-#
-# class User(Base):
-#     __tablename__ = 'users'
-#
-#     id = Column(Integer, primary_key=True)
-#     name = Column(String(50))
-#     age = Column(Integer)
-#     email = Column(String(120))
-#
-#     def __repr__(self):
-#         return "<User(name='%s', age='%d', email='%s')>" % (self.name, self.age, self.email)
-#
-#
-# Base.metadata.create_all(engine)
+Base = sqlalchemy.orm.declarative_base()
+
+
+class User(Base):
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50))
+    age = Column(Integer)
+    email = Column(String(120))
+
+    def __repr__(self):
+        return "<User(name='%s', age='%d', email='%s')>" % (self.name, self.age, self.email)
+
+
+Base.metadata.create_all(engine)
 # endregion
 
 # region CURD
 # 插入数据
-# new_user = User(name='John Doe', age=30, email='john@example.com')
-# session.add(new_user)
-#
-# session.commit()
-#
-# # 查询数据
-# users = session.query(User).filter_by(age=30)
-#
-# for user in users:
-#     print(user)
-#
-# # 更新数据
-# userToUpdate = session.query(User).filter_by(name='John Doe').first()
-# userToUpdate.age = 35
-#
-# session.commit()
+new_user = User(name='John Doe', age=30, email='john@example.com')
+session.add(new_user)
+
+session.commit()
+
+# 查询数据
+users = session.query(User).filter_by(age=30)
+
+for user in users:
+    print(user)
+
+# 更新数据
+userToUpdate = session.query(User).filter_by(name='John Doe').first()
+userToUpdate.age = 35
+
+session.commit()
 
 # 删除数据
 # userToDelete = session.query(User).filter_by(name='John Doe').one()
@@ -102,7 +102,6 @@ def query_function():
     # 关闭连接
     conn.close()
 
-
 # 使用cProfile运行查询函数，并保存结果到stats变量中
 # pr = cProfile.Profile()
 # pr.enable()
@@ -114,4 +113,3 @@ def query_function():
 # stats.sort_stats('cumulative').print_stats()
 
 # endregion
-
