@@ -58,16 +58,18 @@ from db_connect import test_conn
 # flask sqlalchemy 绑定要监听的engine
 import flask_sqlalchemy.record_queries
 
-
 # flask_sqlalchemy.record_queries._listen(engine)
+
+from watch_long_sql import monitor_engine
+
+monitor_engine(test_conn)
 
 
 # 测试alchemy
 @app.route('/db')
 def alchemy():
-    with test_conn.connect() as conn:
-        users = conn.execute(text('SELECT * FROM user'))
-        return jsonify([user.id for user in users])
+    users = test_conn.execute(text('SELECT * FROM user'))
+    return jsonify([user.id for user in users])
 
 
 # 测试pandas

@@ -9,3 +9,7 @@ click~=8.1.3
 MarkupSafe~=2.1.2
 SQLAlchemy~=2.0.13
 pandas
+flasgger
+marshmallow
+apispec
+flask-restx

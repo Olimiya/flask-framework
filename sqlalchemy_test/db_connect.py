@@ -13,4 +13,4 @@ test_conn = create_engine('sqlite:///instance/project.db')
 # 监听engine
 from sqlalchemy_test.watch_long_sql import monitor_engine
 
-# monitor_engine(engine)
+monitor_engine(test_conn)
