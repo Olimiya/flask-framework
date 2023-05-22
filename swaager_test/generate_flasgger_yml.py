@@ -5,10 +5,9 @@
 """
 generate_flasgger_yml.py
 """
+import argparse
 import json, yaml, logging, copy
 import os
-
-from flasgger import swag_from, Swagger
 
 
 # 根据示例的json数据自动生成yml文件
@@ -145,12 +144,31 @@ def generate_yml(json_path, yml_file_name):
     #     f.write(json_str)
 
 
+if __name__ == '__main__':
+    # 读取命令行参数，生成yml文件
+    parser = argparse.ArgumentParser(description="Generate yml file from json file.")
+    parser.add_argument("json_path",
+                        help="The path of json file. \n"
+                             "其中必须包含request和response的json数据，可选择包含tags和summary等信息")
+    # yml文件，不提供时以json文件名为yml文件名
+    parser.add_argument("yml_file_name", help="The name of yml file.", nargs="?")
+    args = parser.parse_args()
+
+    # 生成yml文件
+    if args.yml_file_name is None:
+        # 未提供yml文件名时，以json文件名为yml文件名
+        json_file_name = os.path.basename(args.json_path)
+        args.yml_file_name = json_file_name[:json_file_name.rfind(".")] + ".yml"
+    generate_yml(args.json_path, args.yml_file_name)
+
 # region 根据complex端点，测试json生成yml
 # 生成yml文件
-generate_yml("complex_test.json", "complex.yml")
+# generate_yml("complex_test.json", "complex.yml")
 # endregion
 
 # region 测试的API端点
+from flasgger import swag_from, Swagger
+
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
@@ -234,9 +252,8 @@ def complex_test():
     }
     return jsonify(response)
 
-
 # 启动
-if __name__ == '__main__':
-    app.run(debug=True)
+# if __name__ == '__main__':
+#     app.run(debug=True)
 
 # endregion
