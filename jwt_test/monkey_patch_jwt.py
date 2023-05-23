@@ -1,5 +1,6 @@
-
 import logging
+from functools import wraps
+
 import flask_jwt_extended
 
 # 1. 完善一键取消授权的鉴权接口。目前已完成一键取消授权的效果。
@@ -10,7 +11,6 @@ import flask_jwt_extended
 logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
-
 
 # Use for test
 oidc_auth = False
@@ -32,9 +32,32 @@ def optional_jwt_required(fresh=False, refresh=False, locations=None):
     return original_jwt_required(optional=True, fresh=fresh, refresh=refresh, locations=locations)
 
 
+# 空函数实现比optional好，optional下仍然调用jwt鉴权，在取消auth的情况下，整个应用程序级别应该不再配置jwt
+def empty_verify_jwt_in_request(fresh=False, refresh=False, locations=None):
+    def wrapper(fn):
+        @wraps(fn)
+        def decorator(*args, **kwargs):
+            return fn(*args, **kwargs)
+
+        return decorator
+
+
+def empty_jwt_required(fresh=False, refresh=False, locations=None):
+    def wrapper(fn):
+        @wraps(fn)
+        def decorator(*args, **kwargs):
+            return fn(*args, **kwargs)
+
+        return decorator
+
+
 if not oidc_auth:
     logger.warning("unauth now")
-    verify_jwt_in_request = optional_verify_jwt_in_request
-    flask_jwt_extended.verify_jwt_in_request = optional_verify_jwt_in_request
-    jwt_required = optional_jwt_required
-    flask_jwt_extended.jwt_required = optional_jwt_required
+    # verify_jwt_in_request = optional_verify_jwt_in_request
+    # flask_jwt_extended.verify_jwt_in_request = optional_verify_jwt_in_request
+    # jwt_required = optional_jwt_required
+    # flask_jwt_extended.jwt_required = optional_jwt_required
+    verify_jwt_in_request = empty_verify_jwt_in_request
+    flask_jwt_extended.verify_jwt_in_request = empty_verify_jwt_in_request
+    jwt_required = empty_jwt_required
+    flask_jwt_extended.jwt_required = empty_jwt_required

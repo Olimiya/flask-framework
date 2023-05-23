@@ -1,35 +1,67 @@
-# Watchlist
+# 项目介绍
 
-Example application for flask tutorial "[Flask 入门教程](https://helloflask.com/book/3)".
+项目名称为watchlist是基于flask入门学习的一个项目，具体参考上游源。
+示例程序挪到tutorial文件夹中。
 
-Demo: http://watchlist.helloflask.com
+具体工作是针对flask框架的一些功能模块进行学习，以及进行补充和扩展，包括：
 
-![Screenshot](https://helloflask.com/screenshots/watchlist.png)
+1. blueprint模块
+2. **jwt鉴权模块**
+3. limit控制模块
+4. prometheus监控模块
+5. **sqlalchemy数据库访问模块**
+6. **swagger接口文档模块**
 
+使用的示例代码见各个文件夹中。加粗的模块进行了功能扩展。
 
-## Installation
+# 功能扩展
 
-clone:
-```
-$ git clone https://github.com/helloflask/watchlist.git
-$ cd watchlist
-```
-create & active virtual enviroment then install dependencies:
-```
-$ python3 -m venv env  # use `python ...` on Windows
-$ source env/bin/activate  # use `env\Scripts\activate` on Windows
-(env) $ pip install -r requirements.txt
-```
+## jwt鉴权模块
 
-generate fake data then run:
-```
-(env) $ flask forge
-(env) $ flask run
-* Running on http://127.0.0.1:5000/
-```
+**扩展功能点：**
 
+1. 添加了**一键取消鉴权**的功能。auth配置为False时，所有接口取消鉴权，即使有jwt_required修饰。
+2. 添加**批量鉴权开启和关闭**功能。通**过蓝图批量注册鉴权**，进行开启和关闭。代替单个端点的jwt_required修饰器。
+3. 对开启鉴权的蓝图中，添加**正则匹配豁免url**的功能。即在鉴权蓝图中，添加豁免url的正则表达式，匹配到的url不进行鉴权。
+4. 添加**composed接口**，可以合并route和jwt_required修饰器，简化代码。
 
-## License
+**实现原理：**
 
-This project is licensed under the MIT License (see the
-[LICENSE](LICENSE) file for details).
+1. 一键取消鉴权。
+    - 原理实现是通过**monekey pathching技术**。
+    - **动态修改**jwt_required、verify_jwt_request接口，改为空函数实现。
+    - 要求动态修改在**所有调用之前**。
+2. 批量鉴权
+    - **构造一个TokenLimiter的包或类**（类的话就需要示例化对象了）。
+    - 往里面注册要处理的url或**蓝图**（url也就是调用默认的app，处理和蓝图一样）。对于不注册进来的，不用管。（其他地方可以有自己的jwt_required等，让他们正常用就行）
+    - 对**注册的蓝图，注册before_request**（类似Limter用的是after_request）。在其中进行授权校验。
+    - **默认直接调用verify_jwt_request**。可以指定自己的verfify函数，使用自己的验证方式。实现在jwt基础上，验证role等功能。
+    - 就可以对蓝图整一级的url进行访问控制。
+    - 进一步地，对url的处理，不能对app全部的情况都验证，就要记录一个列表，每次请求时比对这个列表。（能否实现拿出add_url_rule里注册的那个视图函数，然后直接使用装饰器对其修饰后再返回？）未实现
+    - 进一步地，可以**使用正则匹配url，对匹配到的url进行处理**。
+
+**TODOs:**
+
+1. 注册的地方未实现**注册单个url**。按道理批量注册就没必要处理单个，但可以加上更灵活。
+2. 实现对**原本jwt_required**侵入式的支持，即蓝图注册和jwt_required不互斥使用。即使用户使用蓝图批量注册和jwt_required，也可以通过url匹配一起豁免。
+
+## sqlalchemy数据库访问模块
+
+**扩展功能点：**
+
+1. 添加**SQL操作监控**功能，对**长SQL操作进行报警**。针对SQLAlchemy以及Flask-SQLAlchemy分别都支持。使用时将engine注册到monitor_engine即可。
+2. 支持配置**是否监控和监控的时间阈值**。
+
+**实现原理：**
+
+1. 基于**SQLAlchemy的事件机制**，在SQL执行前后进行监控，记录SQL执行时间。根据阈值进行报警提示。
+
+## swagger接口文档模块
+
+**扩展功能：**
+
+1. 针对API接口代码，利用一组测试样例的输入输出JSON，自动生成swagger接口yml文档。
+2. 使用时可通过postman等，提供一组测试样例的输入输出JSON，然后调用该工具包，生成yml模板，再根据需求进行补充。
+
+**实现原理：**
+解析输入输出JSON，递归地判断类型，生成swagger接口yml文档。
